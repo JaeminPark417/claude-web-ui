@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>💬 btw — side question</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<link rel="preconnect" href="https://rsms.me">
+<link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css">
+<script src="https://cdn.jsdelivr.net/npm/markdown-it@14.1.0/dist/markdown-it.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/markdown-it-texmath@1.0.0/texmath.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/common.min.js"></script>
+<style>
+:root{--bg:#1f1e1c;--bg2:#26241f;--panel:#2a2824;--bd:#3a372f;--bd2:#48443b;--tx:#ece9e1;--tx2:#b8b2a4;--tx3:#8a8576;
+--accent:#d97757;--accent2:#c45c3c;--user:#2f3a44;--userbd:#3c4b58;--green:#7bb37b;--red:#d77;--yellow:#d8b86a;
+--mono:"SFMono-Regular",ui-monospace,Menlo,monospace;--sans:"Inter","Pretendard",-apple-system,system-ui,sans-serif;}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--tx);font-family:var(--sans);font-size:14px;line-height:1.6;display:flex;flex-direction:column;overflow:hidden;-webkit-font-smoothing:antialiased}
+#head{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:0 12px;height:46px;background:var(--bg2);border-bottom:1px solid var(--bd)}
+#head .t{font-weight:600;font-size:13px}
+#head .spacer{flex:1}
+#mode{font-size:11px;color:var(--tx3);border:1px solid var(--bd2);border-radius:20px;padding:2px 8px}
+#head button{font-size:12px;color:var(--tx2);background:var(--panel);border:1px solid var(--bd2);border-radius:8px;padding:3px 8px;cursor:pointer}
+#head button:hover{color:var(--tx)}
+#fork.on{color:var(--accent);border-color:var(--accent)}
+#btwlog{flex:1 1 auto;min-height:0;overflow-y:auto;padding:16px 14px 24px}
+.msg{margin:0 0 18px}
+.msg .who{font-size:12px;color:var(--tx3);font-weight:600;letter-spacing:.4px;text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:7px}
+.av{width:18px;height:18px;border-radius:5px;display:inline-block;vertical-align:-3px}.av.a{background:linear-gradient(135deg,var(--accent),var(--accent2))}.av.u{background:#46586a}
+.msg.user .bubble{background:var(--user);border:1px solid var(--userbd);border-radius:12px;padding:11px 15px;white-space:pre-wrap}
+.md{word-wrap:break-word}
+.md p{margin:.5em 0}.md h1,.md h2,.md h3,.md h4{margin:1.1em 0 .5em;line-height:1.3;font-weight:650}
+.md h1{font-size:1.5em;border-bottom:1px solid var(--bd);padding-bottom:.2em}.md h2{font-size:1.3em}.md h3{font-size:1.13em}
+.md a{color:var(--accent);text-decoration:none}.md a:hover{text-decoration:underline}
+.md code{font-family:var(--mono);font-size:.9em;background:#00000040;border:1px solid var(--bd);border-radius:5px;padding:1px 5px}
+.md pre{background:#171614;border:1px solid var(--bd);border-radius:10px;padding:12px 14px;overflow:auto;margin:.7em 0}
+.md pre code{background:none;border:none;padding:0;font-size:.86em}
+.md blockquote{border-left:3px solid var(--bd2);margin:.6em 0;padding:.1em 1em;color:var(--tx2)}
+.md ul,.md ol{padding-left:1.5em;margin:.4em 0}.md li{margin:.18em 0}
+.md table{border-collapse:collapse;margin:.7em 0;display:block;overflow:auto}.md th,.md td{border:1px solid var(--bd2);padding:6px 11px}.md th{background:var(--panel)}
+.md hr{border:none;border-top:1px solid var(--bd);margin:1.2em 0}
+.md .katex{font-size:1.06em}.md .katex-display{margin:.7em 0;overflow:auto hidden}
+.md img{max-width:100%;border-radius:8px}
+.tool{margin:8px 0;border:1px solid var(--bd);border-radius:10px;background:var(--bg2);overflow:hidden}
+.tool>summary{cursor:pointer;list-style:none;padding:8px 12px;font-family:var(--mono);font-size:12.5px;color:var(--tx2);display:flex;gap:8px}
+.tool>summary::-webkit-details-marker{display:none}.tool>summary .tn{color:var(--accent);font-weight:600}.tool>summary .ta{color:var(--tx3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tool .body{border-top:1px solid var(--bd);padding:10px 12px;font-family:var(--mono);font-size:12px;color:var(--tx2);white-space:pre-wrap;max-height:300px;overflow:auto}
+.notice{font-size:11.5px;color:var(--tx3);font-family:var(--mono);margin:6px 0;padding:4px 8px;border-left:2px solid var(--bd2)}
+.notice.warn{color:var(--yellow)}.notice.err{color:var(--red)}
+#foot{flex:0 0 auto;background:var(--bg2);border-top:1px solid var(--bd);padding:10px 12px}
+#cwrap{display:flex;gap:8px;align-items:flex-end;background:var(--panel);border:1px solid var(--bd2);border-radius:12px;padding:6px 6px 6px 12px}
+#cwrap:focus-within{border-color:var(--accent)}
+#in{flex:1;background:none;border:none;color:var(--tx);font-family:var(--sans);font-size:14px;line-height:1.5;resize:none;max-height:140px;outline:none;padding:4px 0}
+#send{flex:0 0 auto;width:32px;height:32px;padding:0;border-radius:9px;border:none;background:var(--accent);color:#fff;font-size:15px;cursor:pointer;display:grid;place-items:center}
+#send:hover{background:var(--accent2)}#send:disabled{opacity:.45;cursor:default}
+::-webkit-scrollbar{width:10px}::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:6px;border:2px solid transparent;background-clip:content-box}
+</style>
+</head>
+<body>
+<div id="head">
+  <span class="t">💬 btw — side question</span>
+  <span class="spacer"></span>
+  <span id="mode">summary</span>
+  <button id="fork" title="전체 맥락(fork) ↔ 요약(summary) 전환">🔱 전체맥락</button>
+</div>
+<div id="btwlog"></div>
+<div id="foot">
+  <div id="cwrap">
+    <textarea id="in" rows="1" placeholder="옆질문 입력 → 메인 세션엔 기록 안 됨  (Enter 전송)"></textarea>
+    <button id="send" title="전송">➤</button>
+  </div>
+</div>
+
+<script>
+// ---------- markdown + KaTeX (same stack as the mirror) ----------
+const md=window.markdownit({html:true,linkify:true,breaks:false,typographer:true,
+  highlight:(s,l)=>{try{if(l&&hljs.getLanguage(l))return hljs.highlight(s,{language:l}).value;}catch(e){}return '';}});
+if(window.texmath) md.use(window.texmath,{engine:window.katex,delimiters:'dollars',katexOptions:{throwOnError:false,strict:false}});
+const renderMd=t=>md.render(t||'');
+const $=s=>document.querySelector(s);
+function el(t,c,h){const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e;}
+const logEl=$('#btwlog'), inEl=$('#in'), sendBtn=$('#send'), modeEl=$('#mode'), forkBtn=$('#fork');
+
+// ---------- params ----------
+const params=new URLSearchParams(location.search);
+const mainSession=params.get('session')||'';     // REQUIRED for context seed
+let mode=(params.get('mode')==='fork')?'fork':'summary';
+const initQ=(params.get('q')||'').trim();
+
+// ---------- drawer-local renderers (same logic the mirror drawer used) ----------
+let asstBubble=null, role=null;
+function btwUser(text){
+  role='user'; asstBubble=null;
+  const m=el('div','msg user'); m.appendChild(el('div','who','<span class="av u"></span> 나'));
+  m.appendChild(el('div','bubble')).textContent=text; logEl.appendChild(m); logEl.scrollTop=logEl.scrollHeight;
+}
+function asstContainer(){
+  if(role==='assistant'&&asstBubble) return asstBubble;
+  role='assistant';
+  const m=el('div','msg assistant'); m.appendChild(el('div','who','<span class="av a"></span> Claude'));
+  const b=el('div','bubble'); m.appendChild(b); logEl.appendChild(m); asstBubble=b; return b;
+}
+function asstText(text){ const b=asstContainer(); const d=el('div','md'); d.innerHTML=renderMd(text); b.appendChild(d); logEl.scrollTop=logEl.scrollHeight; }
+function asstTool(name,input){
+  const b=asstContainer(); const det=el('details','tool'); const sum=el('summary',null,'🔧 <span class="tn"></span> <span class="ta"></span>'); det.appendChild(sum);
+  let arg=''; if(input&&typeof input==='object'){const k=Object.keys(input)[0]; if(k){let v=input[k]; if(typeof v!=='string')v=JSON.stringify(v); arg=k+': '+String(v).slice(0,80);}}
+  sum.querySelector('.tn').textContent=name||'tool'; sum.querySelector('.ta').textContent=arg;
+  det.appendChild(el('div','body')).textContent=input!=null?JSON.stringify(input,null,2):''; b.appendChild(det); logEl.scrollTop=logEl.scrollHeight;
+}
+function notice(text,cls){ const d=el('div','notice'+(cls?' '+cls:'')); d.textContent=text; logEl.appendChild(d); logEl.scrollTop=logEl.scrollHeight; }
+function btwHandle(o){
+  if(o.type==='msg'){
+    if(o.role==='user') btwUser(o.text);          // server echoes the user msg → render here (not on send)
+    else if(o.role==='assistant'){ if(o.kind==='tool') asstTool(o.name,o.input); else asstText(o.text); }
+    return;
+  }
+  if(o.type==='_warn'){ notice('⚠ '+o.text,'warn'); return; }
+  if(o.type==='_stderr'){ notice(o.text.trim(),'err'); return; }
+  if(o.type==='_err'){ notice('⚠ '+o.error,'err'); return; }
+  if(o.type==='_raw'){ return; }
+  if(o.type==='_proc'&&o.status==='error'){ notice('프로세스 오류: '+(o.error||''),'err'); return; }
+}
+
+// ---------- session lifecycle (reuses the existing /btw/* routes) ----------
+let btwId=null, es=null;
+async function openSession(){
+  role=null; asstBubble=null;
+  try{
+    const r=await fetch('/btw/new',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mainSession,mode})});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok||!j.ok){ notice('세션 생성 실패: '+(j.error||('HTTP '+r.status)),'err'); return false; }
+    btwId=j.id; mode=j.mode||mode; modeEl.textContent=mode; forkBtn.classList.toggle('on',mode==='fork');
+    if(es) es.close();
+    es=new EventSource('/btw/events?id='+encodeURIComponent(btwId));
+    es.onmessage=m=>{ let o; try{o=JSON.parse(m.data);}catch{return;} try{btwHandle(o);}catch(e){console.error(e);} };
+    return true;
+  }catch(e){ notice('연결 오류: '+e.message,'err'); return false; }
+}
+function closeSession(beacon){
+  if(es){ es.close(); es=null; }
+  if(btwId){
+    const body=JSON.stringify({id:btwId});
+    if(beacon&&navigator.sendBeacon){ try{ navigator.sendBeacon('/btw/close',new Blob([body],{type:'application/json'})); }catch{ /* fall through */ } }
+    else { fetch('/btw/close',{method:'POST',headers:{'Content-Type':'application/json'},body,keepalive:true}).catch(()=>{}); }
+    btwId=null;
+  }
+}
+
+// ---------- send ----------
+async function send(){
+  const text=inEl.value.trim(); if(!text) return;
+  if(!btwId){ if(!await openSession()) return; }
+  sendBtn.disabled=true;
+  try{
+    // server echoes the user msg back over SSE → do NOT render it locally
+    const r=await fetch('/btw/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:btwId,text})});
+    const j=await r.json().catch(()=>({}));
+    if(r.ok&&j.ok){ inEl.value=''; autosize(); }
+    else notice('전송 실패: '+(j.error||('HTTP '+r.status)),'err');
+  }catch(e){ notice('전송 오류: '+e.message,'err'); }
+  finally{ sendBtn.disabled=false; inEl.focus(); }
+}
+function autosize(){ inEl.style.height='auto'; inEl.style.height=Math.min(inEl.scrollHeight,140)+'px'; }
+inEl.addEventListener('input',autosize);
+sendBtn.addEventListener('click',send);
+// IME (한글 조합) guard — never submit mid-composition
+let composing=false;
+inEl.addEventListener('compositionstart',()=>{ composing=true; });
+inEl.addEventListener('compositionend',()=>{ composing=false; });
+inEl.addEventListener('keydown',(e)=>{ if(e.key==='Enter'&&!e.shiftKey&&!composing&&!e.isComposing){ e.preventDefault(); send(); } });
+
+// ---------- fork toggle: close → flip → fresh session ----------
+forkBtn.addEventListener('click',async()=>{
+  closeSession(false);
+  mode = mode==='summary' ? 'fork' : 'summary';
+  logEl.innerHTML='';
+  await openSession();
+  inEl.focus();
+});
+
+// ---------- postMessage: mirror pushes a new question into the already-open popup ----------
+window.addEventListener('message',e=>{
+  if(e.origin!==location.origin) return;
+  if(e.data && e.data.btwq){ inEl.value=String(e.data.btwq); autosize(); send(); }
+});
+
+// ---------- teardown on window close ----------
+window.addEventListener('pagehide',()=>closeSession(true));
+window.addEventListener('beforeunload',()=>closeSession(true));
+
+// ---------- boot ----------
+(async()=>{
+  await openSession();
+  if(initQ){ inEl.value=initQ; autosize(); send(); }   // auto-send the initial question once
+  inEl.focus();
+})();
+</script>
+</body>
+</html>

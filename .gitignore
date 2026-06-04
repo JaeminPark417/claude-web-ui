@@ -1,0 +1,12 @@
+# runtime / machine-local state (never commit)
+server.log
+server.pid
+.target-surface
+.session-meta
+
+# editor backups created while iterating
+*.bak-*
+
+# misc
+node_modules/
+.DS_Store
