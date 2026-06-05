@@ -19,6 +19,7 @@ import { StringDecoder } from 'node:string_decoder';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { homedir } from 'node:os';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -358,6 +359,27 @@ function startMirror(req, res, sid, surface) {
 const CMUX_BIN = process.env.CMUX_BIN ||
   (existsSync('/Applications/cmux.app/Contents/Resources/bin/cmux')
     ? '/Applications/cmux.app/Contents/Resources/bin/cmux' : 'cmux');
+// Resolve the LIVE cmux control socket. This server is long-lived; cmux moves its socket across
+// app updates (e.g. ~/Library/Application Support/cmux → ~/.local/state/cmux), so a CMUX_SOCKET_PATH
+// inherited at spawn time can go stale → every `cmux send` fails "Socket not found". cmux records the
+// active socket in a `last-socket-path` file under each known state dir; trust an env path only while
+// its socket still exists, else fall back to those files. Cached, but re-validated each call so the
+// server self-heals if the socket moves mid-run (no restart needed).
+const CMUX_STATE_FILES = [
+  join(homedir(), '.local/state/cmux/last-socket-path'),
+  join(homedir(), 'Library/Application Support/cmux/last-socket-path'),
+];
+let _cmuxSock = null;
+function cmuxSocket() {
+  if (_cmuxSock && existsSync(_cmuxSock)) return _cmuxSock;     // cached & still live
+  const envp = process.env.CMUX_SOCKET_PATH;
+  if (envp && existsSync(envp)) return (_cmuxSock = envp);      // inherited env, still live
+  for (const f of CMUX_STATE_FILES) {
+    try { const p = readFileSync(f, 'utf8').trim(); if (p && existsSync(p)) return (_cmuxSock = p); }
+    catch { /* file absent — try next */ }
+  }
+  return (_cmuxSock = envp || null);                            // last resort: whatever env had
+}
 function getTargetSurface() {
   try { return readFileSync(join(__dirname, '.target-surface'), 'utf8').trim(); }
   catch { return process.env.CLAUDE_WEB_SURFACE || ''; }
@@ -380,6 +402,7 @@ function cmux(args) {
     // could only reach terminals sharing that workspace. Removing them forces global resolution.
     const env = { ...process.env };
     for (const k of ['CMUX_WORKSPACE_ID','CMUX_SURFACE_ID','CMUX_TAB_ID','CMUX_PANEL_ID','CMUX_PANE_ID','CMUX_WINDOW_ID']) delete env[k];
+    const _sk = cmuxSocket(); if (_sk) env.CMUX_SOCKET_PATH = _sk;  // pin live socket (self-heals if cmux moved it)
     let c;
     try { c = spawn(CMUX_BIN, args, { env }); }
     catch (e) { return resolve({ ok: false, error: e.message }); }
@@ -396,6 +419,7 @@ function cmuxOut(args) {
   return new Promise((resolve) => {
     const env = { ...process.env };
     for (const k of ['CMUX_WORKSPACE_ID','CMUX_SURFACE_ID','CMUX_TAB_ID','CMUX_PANEL_ID','CMUX_PANE_ID','CMUX_WINDOW_ID']) delete env[k];
+    const _sk = cmuxSocket(); if (_sk) env.CMUX_SOCKET_PATH = _sk;  // pin live socket (self-heals if cmux moved it)
     let c, out = '';
     try { c = spawn(CMUX_BIN, args, { env }); }
     catch (e) { return resolve({ ok: false, error: e.message }); }
