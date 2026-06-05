@@ -1,0 +1,86 @@
+#!/bin/bash
+# claude-web — start the claude-web-ui server durably and (optionally) open it.
+#
+# On macOS the server runs as a launchd LaunchAgent (com.claude-web-ui): it is owned by launchd,
+# so it survives the terminal/session that started it exiting, and is KeepAlive-respawned if it
+# ever dies. (A plain `nohup node server.mjs &` does NOT survive — a terminal multiplexer such as
+# cmux tears down its pane's whole process group on session end, killing the server.)
+# Off macOS it falls back to a detached background process.
+#
+# Idempotent: reuses a running server. Usage: claude-web [--no-open] [--restart]
+set -uo pipefail
+
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"   # repo dir (this script lives in it)
+PORT="${CLAUDE_WEB_PORT:-8765}"
+URL="http://127.0.0.1:${PORT}/"
+LOG="$DIR/server.log"
+NODE="$(command -v node || true)"; [ -n "$NODE" ] || NODE="/usr/bin/env node"
+
+OPEN=1; RESTART=0
+for a in "$@"; do
+  [ "$a" = "--no-open" ] && OPEN=0
+  [ "$a" = "--restart" ] && RESTART=1
+done
+
+is_up(){ curl -s -o /dev/null -m 1 "$URL" 2>/dev/null; }
+port_pid(){ lsof -ti "tcp:${PORT}" -sTCP:LISTEN 2>/dev/null; }
+
+LABEL="com.claude-web-ui"
+PLIST="$HOME/Library/LaunchAgents/${LABEL}.plist"
+DOMAIN="gui/$(id -u 2>/dev/null || echo "$UID")"
+
+write_plist(){
+  mkdir -p "$HOME/Library/LaunchAgents"
+  cat > "$PLIST" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key><string>${LABEL}</string>
+    <key>ProgramArguments</key>
+    <array><string>${NODE}</string><string>${DIR}/server.mjs</string></array>
+    <key>WorkingDirectory</key><string>${DIR}</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>HOME</key><string>${HOME}</string>
+        <key>PATH</key><string>$(dirname "${NODE}"):/opt/homebrew/bin:${HOME}/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+        <key>CLAUDE_WEB_PORT</key><string>${PORT}</string>
+    </dict>
+    <key>RunAtLoad</key><true/>
+    <key>KeepAlive</key><true/>
+    <key>ThrottleInterval</key><integer>5</integer>
+    <key>StandardOutPath</key><string>${LOG}</string>
+    <key>StandardErrorPath</key><string>${LOG}</string>
+</dict>
+</plist>
+EOF
+}
+
+agent_loaded(){ launchctl print "${DOMAIN}/${LABEL}" >/dev/null 2>&1; }
+ensure_loaded(){ agent_loaded || launchctl bootstrap "$DOMAIN" "$PLIST" 2>/dev/null; }
+
+if command -v launchctl >/dev/null 2>&1; then
+  # macOS: manage the server via launchd so it outlives this terminal session.
+  write_plist                                  # keep the agent definition in sync with this DIR/NODE
+  if [ "$RESTART" = "1" ]; then
+    # free :PORT from any non-launchd stray (e.g. a leftover `node server.mjs`) so the agent can bind
+    p="$(port_pid)"; [ -n "$p" ] && kill $p 2>/dev/null
+    ensure_loaded
+    launchctl kickstart -k "${DOMAIN}/${LABEL}" 2>/dev/null
+  elif ! is_up; then
+    ensure_loaded
+    agent_loaded && launchctl kickstart "${DOMAIN}/${LABEL}" 2>/dev/null
+  fi
+else
+  # non-macOS: plain detached background process (no KeepAlive — restart manually if it dies).
+  if [ "$RESTART" = "1" ]; then p="$(port_pid)"; [ -n "$p" ] && kill $p 2>/dev/null; fi
+  is_up || ( cd "$DIR" && nohup "$NODE" server.mjs >>"$LOG" 2>&1 & )
+fi
+
+for i in $(seq 1 30); do is_up && break; sleep 0.3; done
+if is_up; then echo "up → $URL"; else echo "FAILED to start; see $LOG"; tail -n 20 "$LOG" 2>/dev/null; exit 1; fi
+
+if [ "$OPEN" = "1" ]; then
+  if command -v cmux >/dev/null 2>&1; then cmux browser open-split "$URL" 2>/dev/null && exit 0; fi
+  command -v open >/dev/null 2>&1 && open "$URL"
+fi

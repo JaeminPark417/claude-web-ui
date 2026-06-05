@@ -6,8 +6,8 @@ set -uo pipefail
 PORT="${CLAUDE_WEB_PORT:-8765}"
 BASE="http://127.0.0.1:${PORT}/mirror"
 
-# 1. ensure server
-curl -fs -o /dev/null -m 2 "$BASE" 2>/dev/null || bash "$HOME/bin/claude-web" --no-open >/dev/null 2>&1
+# 1. ensure server (the launcher runs it under launchd → survives this session ending)
+curl -fs -o /dev/null -m 2 "$BASE" 2>/dev/null || bash "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/claude-web" --no-open >/dev/null 2>&1
 
 # 2. THIS terminal session's surface (= remote-input target) and pane (= where to add the tab).
 #    Prefer the STABLE surface UUID over the short ref (refs like surface:39 can be reused after a

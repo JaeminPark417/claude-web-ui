@@ -44,6 +44,20 @@ node server.mjs
 #   http://127.0.0.1:8765/         ← standalone headless browser chat
 ```
 
+### Keep it running across sessions (recommended)
+
+`node server.mjs` dies when the terminal that started it closes — and `nohup … &` is **not** enough either: a terminal multiplexer such as [cmux](https://cmux.com) tears down its pane's whole process group on session exit, taking the server with it. The included launcher solves this:
+
+```bash
+./claude-web            # start (and open in a browser)
+./claude-web --no-open  # just ensure it's running
+./claude-web --restart  # hard-restart (e.g. after editing server.mjs)
+```
+
+On **macOS** this installs a launchd LaunchAgent (`com.claude-web-ui`) that **owns** the server — it survives the terminal/session that started it exiting, auto-starts at login, and is `KeepAlive`-respawned if it ever dies. The agent definition is generated automatically from the repo's location, so it works wherever you cloned it. Off macOS the launcher falls back to a detached background process. (`open-mirror.sh` calls this launcher to guarantee the server is up before opening a bound mirror.)
+
+To stop / remove the agent: `launchctl bootout gui/$(id -u)/com.claude-web-ui` and delete `~/Library/LaunchAgents/com.claude-web-ui.plist`.
+
 To bind a mirror to a specific terminal session and `cmux` surface, pass them in the URL:
 
 ```
