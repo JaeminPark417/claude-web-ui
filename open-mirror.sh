@@ -26,7 +26,7 @@ TGT="${SUUID:-$SR}"   # inject target: stable UUID if available, else short ref
 SESS="${CLAUDE_CODE_SESSION_ID:-$(jq -r '.session_id // empty' /tmp/claude-statusline.json 2>/dev/null)}"
 
 # fallback target (older single-target path); the URL surface= is authoritative
-printf '%s' "$TGT" > "$HOME/claude-web-ui/.target-surface" 2>/dev/null || true
+printf '%s' "$TGT" > "$HOME/repos/claude-web-ui/.target-surface" 2>/dev/null || true
 
 Q="surface=${TGT}"
 [ -n "$SESS" ] && Q="session=${SESS}&${Q}"

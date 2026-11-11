@@ -161,7 +161,20 @@ body.btw-open{padding-right:var(--btww)}  /* push-split: shrink main content lef
 const md=window.markdownit({html:true,linkify:true,breaks:false,typographer:true,
   highlight:(s,l)=>{try{if(l&&hljs.getLanguage(l))return hljs.highlight(s,{language:l}).value;}catch(e){}return '';}});
 if(window.texmath) md.use(window.texmath,{engine:window.katex,delimiters:'dollars',katexOptions:{throwOnError:false,strict:false}});
-const renderMd=t=>md.render(t||'');
+// Normalize LaTeX bracket delimiters \(..\)->$..$ and \[..\]->$$..$$ so both styles render
+// (texmath only knows 'dollars'). Code fences / inline code are masked first so literal
+// backslash-paren inside code is left untouched. Inner whitespace is trimmed to satisfy
+// texmath's dollars inline rule (no space adjacent to the $).
+function normMath(src){
+  if(!src) return src;
+  const stash=[];
+  src=src.replace(/```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]+`/g,m=>{stash.push(m);return '\x02CODEMASK'+(stash.length-1)+'\x03';});
+  src=src.replace(/\\\[([\s\S]+?)\\\]/g,(_,x)=>'$$'+x.trim()+'$$');
+  src=src.replace(/\\\(([\s\S]+?)\\\)/g,(_,x)=>'$'+x.trim()+'$');
+  src=src.replace(/\x02CODEMASK(\d+)\x03/g,(_,i)=>stash[+i]);
+  return src;
+}
+const renderMd=t=>md.render(normMath(t||''));
 const $=s=>document.querySelector(s), logEl=$('#log'), scrollEl=$('#scroll'), dot=$('#dot'), sidEl=$('#sid');
 function el(t,c,h){const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e;}
 // ---- "Claude 작업 중" indicator: live elapsed-seconds timer so silent thinking gaps still look alive ----
